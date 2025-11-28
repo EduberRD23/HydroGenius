@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HydroGenius | Aula Interactiva</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['\\(', '\\)']],
+        displayMath: [['\\[', '\\]']],
+        processEscapes: true
+      },
+      startup: {
+        pageReady: () => {
+          return MathJax.startup.defaultPageReady().then(() => {
+            console.log('MathJax loaded');
+          });
+        }
+      }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <style>
+    :root{ --bg:#0b0f17; --card:#0f172a; --ink:#ffffff; --muted:#cbd5e1; --brand:#60a5fa; --brand-2:#3b82f6; --ok:#16a34a; --warn:#ef4444; --soft:#1f2937; --accent:#f59e0b; }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:var(--bg);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto; color:var(--ink)}
+    a{color:var(--brand)}
+    .container{max-width:1100px;margin:0 auto;padding:24px}
+
+    /* ===== Auth screen ===== */
+    #login-screen{position:fixed;top:0;left:0;width:100%;height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--bg);z-index:9999}
+    .card{background:var(--card);border-radius:14px;box-shadow:0 10px 30px rgba(2,12,27,.35);padding:28px;width:min(680px,100%);color:var(--ink)}
+    .center{text-align:center}
+    .waves{font-size:46px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.25))}
+    h1{margin:.2rem 0 1rem;font-size:34px;color:var(--accent)}
+    h2,h3{color:var(--accent)}
+    .muted{color:var(--brand)}
+    label{font-weight:600;font-size:.95rem;color:var(--brand)}
+    .input{display:flex;align-items:center;gap:10px;border:2px solid var(--soft);border-radius:10px;padding:12px 14px;background:#0b1220;color:var(--ink)}
+    .input input{border:none;outline:none;font:inherit;width:100%;background:transparent;color:var(--ink)}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+    .btn{cursor:pointer;border:none;border-radius:10px;padding:14px 16px;font-weight:800;letter-spacing:.2px}
+    .btn.primary{background:var(--accent);color:#000}
+    .btn.ghost{background:#0b1220;color:var(--brand);border:1px solid var(--soft)}
+    .btn.small{padding:10px 12px;font-weight:700;border-radius:8px}
+    .link{font-weight:600;color:var(--brand)}
+    .actions{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
+    .footer-note{font-size:.9rem;color:var(--muted);margin-top:22px}
+
+    /* ===== App shell ===== */
+    #app{display:none !important;min-height:100vh}
+    .topnav{background:#0b1220;position:sticky;top:0;z-index:10;border-bottom:1px solid var(--soft)}
+    .topnav .container{display:flex;gap:18px;align-items:center;justify-content:space-between;padding:14px 24px}
+    .brand{display:flex;gap:10px;align-items:center;font-weight:800}
+    .brand .waves{font-size:28px}
+    nav a{margin:0 10px;text-decoration:none;color:var(--brand);font-weight:700}
+    nav a.active, nav a:hover{color:#a5d8ff}
+    .pill{background:#0b1220;color:#a5d8ff;padding:8px 12px;border-radius:999px;font-weight:700;border:1px solid var(--soft)}
+
+    section{padding:36px 0}
+    section h2{font-size:28px;margin:0 0 8px}
+    section p{color:#e5e7eb}
+
+    .grid{display:grid;gap:18px}
+    .grid.cols-2{grid-template-columns:1fr 1fr}
+    .grid.cols-3{grid-template-columns:repeat(3,1fr)}
+
+    .panel{background:var(--card);border:1px solid var(--soft);border-radius:14px;padding:20px}
+    .panel h3{margin:0 0 6px;color:var(--accent)}
+    .tag{display:inline-block;background:#0b1220;border:1px solid var(--soft);border-radius:8px;padding:2px 8px;margin-right:6px;font-size:.8rem;color:var(--brand)}
+
+    .calc-form{display:grid;gap:12px}
+    .calc-form .row{grid-template-columns:repeat(2,1fr)}
+    .calc-form input, .calc-form select{border:2px solid var(--soft);border-radius:10px;padding:10px 12px;font:inherit;background:#0b1220;color:var(--ink)}
+    .calc-form .note{font-size:.9rem;color:#9ca3af}
+    .result{border-left:4px solid var(--ok);background:#ecfdf5;border-radius:10px;padding:12px 14px;color:#000000 !important;font-weight:600;opacity:1 !important;}
+    .result.ok{border-left:4px solid var(--ok);background:#062e18;border-radius:10px;padding:12px 14px;color:#e5fbea}
+    .result.danger{border-left:4px solid var(--warn);background:#3a0c0c;color:#fee2e2}
+    .steps{background:#f8f9fa;border:1px dashed #cbd5e1;border-radius:12px;padding:12px 14px;white-space:pre-wrap;color:#000000;font-family:ui-monospace,monospace;font-size:0.9rem}
+
+    .exercise{display:grid;gap:10px}
+    .answer{display:flex;gap:8px;align-items:center}
+    .badge{display:inline-flex;align-items:center;gap:8px;padding:4px 10px;border-radius:8px;font-weight:700;font-size:0.9rem}
+    .badge.ok{background:#084c2e;color:#a7f3d0;border:1px solid #059669}
+    .badge.warn{background:#422006;color:#fcd34d;border:1px solid #d97706}
+    .badge.fail{background:#450a0a;color:#fecdd3;border:1px solid #dc2626}
+
+    /* Traffic Light UI */
+    .traffic-ui { display: flex; gap: 4px; background: #000; padding: 4px; border-radius: 99px; border: 1px solid #333; }
+    .light { width: 10px; height: 10px; border-radius: 50%; background: #333; opacity: 0.3; transition: all 0.3s ease; }
+    .light.r.on { background: #ef4444; opacity: 1; box-shadow: 0 0 6px #ef4444; }
+    .light.y.on { background: #fbbf24; opacity: 1; box-shadow: 0 0 6px #fbbf24; }
+    .light.g.on { background: #22c55e; opacity: 1; box-shadow: 0 0 6px #22c55e; }
+
+    .kbd{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;background:#111827;color:#d1d5db;border-radius:8px;padding:2px 6px}
+
+    @media (max-width: 900px){
+      .grid.cols-2,.grid.cols-3{grid-template-columns:1fr}
+      .row{grid-template-columns:1fr}
+      nav{display:none}
+    }
+  </style>
+</head>
+<body>
+  <!-- ===================== LOGIN ===================== -->
+  <main id="login-screen">
+    <div class="card">
+      <div class="center">
+        <div class="waves">🧪⚙️🧮💧</div>
+        <h1>HydroGenius</h1>
+        <p class="muted">Accede a tu cuenta del aula de <b>Mecánica de Fluidos</b>.</p>
+        <p id="auth-status" style="font-size:0.85rem; color: var(--ok); display:block; margin-top:8px">🟢 Modo Standalone (Offline)</p>
+      </div>
+
+      <form id="form-login" style="display:grid;gap:12px;margin-top:10px">
+        <label>Correo electrónico</label>
+        <div class="input"><span>👤</span><input id="email" type="email" placeholder="tu@email.com" required></div>
+        <label>Contraseña</label>
+        <div class="input"><span>🔒</span><input id="pwd" type="password" placeholder="••••••••" required></div>
+        <div class="actions">
+          <label style="display:flex;align-items:center;gap:8px;user-select:none"><input id="remember" type="checkbox"> Recordarme</label>
+          <a href="#" onclick="alert('En modo offline, si olvidas tu contraseña deberás crear una cuenta nueva.');return false;">¿Olvidaste tu contraseña?</a>
+        </div>
+        <button class="btn primary" type="submit" id="btn-login">➜ Iniciar Sesión</button>
+        <div class="footer-note center">¿No tienes una cuenta? <a class="link" href="#" onclick="openRegister();return false;">Regístrate aquí</a></div>
+      </form>
+
+      <form id="form-register" style="display:none;gap:12px;margin-top:10px">
+        <div class="center"><h3 style="margin:6px 0 2px">Registro rápido</h3><p class="muted">Crea tu cuenta local</p></div>
+        <label>Nombre completo</label>
+        <div class="input"><span>🧑</span><input id="reg-name" placeholder="Nombre y Apellido" required></div>
+        <label>Correo</label>
+        <div class="input"><span>✉️</span><input id="reg-email" type="email" placeholder="tu@email.com" required></div>
+        <label>Contraseña</label>
+        <div class="input"><span>🔑</span><input id="reg-pwd" type="password" placeholder="Crea una contraseña" required></div>
+        <div class="row">
+          <button class="btn ghost" type="button" onclick="closeRegister()">Cancelar</button>
+          <button class="btn primary" type="button" onclick="registerUser()" id="btn-register">Crear cuenta</button>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <!-- ===================== APP ===================== -->
+  <div id="app">
+    <header class="topnav">
+      <div class="container">
+        <div class="brand"><span class="waves">🧪⚙️🧮💧</span> HydroGenius</div>
+        <nav>
+          <a href="#teoria" class="active">Teoría</a>
+          <a href="#calculadoras">Calculadoras</a>
+          <a href="#ejercicios">Ejercicios</a>
+        </nav>
+        <div style="display:flex; align-items:center; gap:10px">
+          <!-- Timer Display -->
+          <span id="session-timer" class="pill" style="font-family:ui-monospace, monospace; min-width:80px; text-align:center">⏱️ 00:00</span>
+          <span id="user-pill" class="pill">👋🏼</span>
+          <button class="btn small" onclick="logout()">Cerrar sesión</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="container">
+      <!-- ===== TEORÍA ===== -->
+      <section id="teoria">
+        <h2>1) Fundamento teórico</h2>
+        <p class="muted">Basado en el principio de conservación de la energía para un fluido ideal e incompresible que se mueve a lo largo de una línea de corriente.</p>
+
+        <div class="grid cols-3">
+          <article class="panel">
+            <h3>1.1 Ecuación de Bernoulli</h3>
+            <span class="tag">Fluido ideal</span><span class="tag">Incompresible</span><span class="tag">Línea de corriente</span>
+            <p>La ecuación expresa la suma de las contribuciones de presión, velocidad y altura:</p>
+            <p>\[ \frac{P}{\gamma} + z + \frac{v^2}{2g} = \text{constante} \]</p>
+            <p>con <em>P</em> presión, <em>\(\gamma\)</em> peso específico del fluido, <em>z</em> altura geométrica, <em>v</em> velocidad y <em>g</em> aceleración de la gravedad. Esta forma resume que la energía de presión, la energía potencial y la energía cinética se conservan a lo largo de la línea de corriente.</p>
+          </article>
+
+          <article class="panel">
+            <h3>1.2 Aplicación: Tubo de Venturi</h3>
+            <span class="tag">Continuidad</span><span class="tag">Medición de caudal</span>
+            <p>Al reducir el área en el cuello, aumenta la velocidad y disminuye la presión. El caudal volumétrico puede estimarse con:</p>
+            <p>\[ Q = A_2 \sqrt{\frac{2(P_1-P_2)}{\rho\left(1-\left(\tfrac{A_2}{A_1}\right)^2\right)}} \]</p>
+            <p>siendo \(A_1,A_2\) las áreas de las secciones de mayor y menor diámetro, \(P_1,P_2\) las presiones respectivas y \(\rho\) la densidad.</p>
+          </article>
+
+          <article class="panel">
+            <h3>1.3 Aplicación: Ecuación de Torricelli</h3>
+            <span class="tag">Orificio</span><span class="tag">Tanque abierto</span>
+            <p>Para un orificio a profundidad \(h\) bajo la superficie libre:</p>
+            <p>\[ v = \sqrt{2gh}\quad \text{(ideal)} \qquad \text{y} \qquad v = C_d\sqrt{2gh}\;\text{(real)} \]</p>
+          </article>
+        </div>
+
+        <div class="panel" style="margin-top:12px">
+          <h3>1.4 Restricciones y alcance</h3>
+          <ul>
+            <li>Válida para <b>fluidos incompresibles</b> con <b>peso específico constante</b>.</li>
+            <li>Aplicable a lo largo de una <b>misma línea de corriente</b>.</li>
+            <li>No incluye <b>fricción ni pérdidas</b>, ni <b>transferencia de calor</b> o <b>trabajo de máquinas</b> salvo que se use la forma extendida.</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- ===== CALCULADORAS ===== -->
+      <section id="videos">
+        <h2>2) Videos recomendados</h2>
+        <p class="muted">Antes de practicar, revisa estas explicaciones.</p>
+        <div class="grid cols-2">
+          <div class="panel">
+            <h3>Bernoulli – explicación</h3>
+            <a href="https://www.youtube.com/watch?v=cCT0cI2rBho" target="_blank" class="btn ghost" style="display:inline-block;margin-top:8px">📺 Ver video en YouTube</a>
+          </div>
+          <div class="panel">
+            <h3>Venturí / Torricelli</h3>
+            <a href="https://www.youtube.com/watch?v=H67AUv2LVLc" target="_blank" class="btn ghost" style="display:inline-block;margin-top:8px">📺 Ver video en YouTube</a>
+          </div>
+          <div class="panel">
+            <h3>Ecuación de Bernoulli - Ejercicio</h3>
+            <a href="https://youtu.be/0z6nQLCRxpo?si=DKU-BOJQ3SvbwOnG" target="_blank" class="btn ghost" style="display:inline-block;margin-top:8px">📺 Ver video en YouTube</a>
+          </div>
+          <div class="panel">
+            <h3>Teorema de Torricelli - Ejercicio</h3>
+            <a href="https://youtu.be/epQFWPzSeCY?si=XaBRsOUUkf5pIPk_" target="_blank" class="btn ghost" style="display:inline-block;margin-top:8px">📺 Ver video en YouTube</a>
+          </div>
+        </div>
+      </section>
+
+      <section id="calculadoras">
+        <h2>3) Calculadoras con pasos</h2>
+        <p>Escribe los datos y pulsa <b>Calcular</b>. Cada herramienta muestra la <b>fórmula utilizada</b> y el <b>procedimiento</b> con sustitución numérica.</p>
+
+        <div class="grid cols-2">
+          <!-- Bernoulli head -->
+          <article class="panel">
+            <h3>3.1 Carga total en un punto (H)</h3>
+            <form class="calc-form" onsubmit="calcH(event)">
+              <div class="row">
+                <div>
+                  <label>Presión P (Pa)</label>
+                  <input id="h_P" type="number" step="any" value="101325" required>
+                </div>
+                <div>
+                  <label>Densidad ρ (kg/m³)</label>
+                  <input id="h_rho" type="number" step="any" value="1000" required>
+                </div>
+              </div>
+              <div class="row">
+                <div>
+                  <label>Velocidad v (m/s)</label>
+                  <input id="h_v" type="number" step="any" value="5" required>
+                </div>
+                <div>
+                  <label>Altura z (m)</label>
+                  <input id="h_z" type="number" step="any" value="2" required>
+                </div>
+              </div>
+              <button class="btn primary" type="submit">Calcular Carga Total (H)</button>
+              <div id="h_result"></div>
+            </form>
+          </article>
+
+          <!-- Venturi -->
+          <article class="panel">
+            <h3>3.2 Venturí (Q, v₁, v₂) – horizontal</h3>
+            <form class="calc-form" onsubmit="calcVenturi(event)">
+              <div class="row">
+                <div>
+                  <label>P₁ (Pa)</label>
+                  <input id="v_P1" type="number" step="any" value="120000" required>
+                </div>
+                <div>
+                  <label>P₂ (Pa)</label>
+                  <input id="v_P2" type="number" step="any" value="90000" required>
+                </div>
+              </div>
+              <div class="row">
+                <div>
+                  <label>Diámetro D₁ (m)</label>
+                  <input id="v_D1" type="number" step="any" value="0.08" required>
+                </div>
+                <div>
+                  <label>Diámetro D₂ (m)</label>
+                  <input id="v_D2" type="number" step="any" value="0.04" required>
+                </div>
+              </div>
+              <div class="row">
+                <div>
+                  <label>Densidad ρ (kg/m³)</label>
+                  <input id="v_rho" type="number" step="any" value="1000" required>
+                </div>
+                <div class="note">Supuestos: horizontal (z₁=z₂), fluido incompresible, sin pérdidas.</div>
+              </div>
+              <button class="btn primary" type="submit">Calcular Venturí</button>
+              <div id="v_result"></div>
+            </form>
+          </article>
+
+          <!-- Torricelli -->
+          <article class="panel">
+            <h3>3.3 Torricelli (v y Q)</h3>
+            <form class="calc-form" onsubmit="calcTorricelli(event)">
+              <div class="row">
+                <div>
+                  <label>Altura de líquido h (m)</label>
+                  <input id="t_h" type="number" step="any" value="2" required>
+                </div>
+                <div>
+                  <label>Coef. de descarga C<sub>d</sub> (0-1)</label>
+                  <input id="t_Cd" type="number" step="any" value="0.62" required>
+                </div>
+              </div>
+              <div class="row">
+                <div>
+                  <label>Diámetro del orificio (m)</label>
+                  <input id="t_D" type="number" step="any" value="0.02" required>
+                </div>
+                <div class="note">Resultado: velocidad de salida y caudal. Usa \(v = C_d\sqrt{2gh}\).</div>
+              </div>
+              <button class="btn primary" type="submit">Calcular Torricelli</button>
+              <div id="t_result"></div>
+            </form>
+          </article>
+
+        </div>
+      </section>
+
+      <!-- ===== EJERCICIOS ===== -->
+      <section id="ejercicios">
+        <h2>4) Ejercicios guiados (interactivos)</h2>
+        <p>Los ejercicios vienen con <b>datos propuestos</b>; puedes <b>cambiar las variables</b> y resolver. Al pulsar <b>Solución guiada</b> verás los pasos y podrás <b>verificar tu respuesta</b>.</p>
+
+        <div class="grid cols-3">
+          <!-- Ej 1: H -->
+          <article class="panel exercise">
+            <h3>4.1 Bernoulli – Carga total H</h3>
+            <p class="muted">Datos sugeridos: P=101325 Pa; ρ=1000 kg/m³; v=5 m/s; z=2 m.</p>
+            <div class="row">
+              <div><label>P (Pa)</label><input id="e1_P" type="number" step="any" value="101325"></div>
+              <div><label>ρ (kg/m³)</label><input id="e1_rho" type="number" step="any" value="1000"></div>
+            </div>
+            <div class="row">
+              <div><label>v (m/s)</label><input id="e1_v" type="number" step="any" value="5"></div>
+              <div><label>z (m)</label><input id="e1_z" type="number" step="any" value="2"></div>
+            </div>
+            <div class="answer">
+              <input id="e1_ans" type="number" step="any" placeholder="Tu H (m)">
+              <button class="btn ghost" onclick="checkE1(event)">Verificar</button>
+              <span id="e1_badge"></span>
+            </div>
+            <div class="row">
+              <button class="btn primary" onclick="solveE1(event)">Solución guiada</button>
+              <button class="btn" onclick="resetE1(event)">Restaurar</button>
+            </div>
+            <div id="e1_steps" class="steps" style="display:none"></div>
+          </article>
+
+          <!-- Ej 2: Venturi -->
+          <article class="panel exercise">
+            <h3>4.2 Venturí – Caudal Q</h3>
+            <p class="muted">Datos sugeridos: P₁=120 kPa; P₂=90 kPa; D₁=0.08 m; D₂=0.04 m; ρ=1000 kg/m³.</p>
+            <div class="row">
+              <div><label>P₁ (Pa)</label><input id="e2_P1" type="number" step="any" value="120000"></div>
+              <div><label>P₂ (Pa)</label><input id="e2_P2" type="number" step="any" value="90000"></div>
+            </div>
+            <div class="row">
+              <div><label>D₁ (m)</label><input id="e2_D1" type="number" step="any" value="0.08"></div>
+              <div><label>D₂ (m)</label><input id="e2_D2" type="number" step="any" value="0.04"></div>
+            </div>
+            <div class="row">
+              <div><label>ρ (kg/m³)</label><input id="e2_rho" type="number" step="any" value="1000"></div>
+              <div class="answer">
+                <input id="e2_ans" type="number" step="any" placeholder="Tu Q (m³/s)">
+                <button class="btn ghost" onclick="checkE2(event)">Verificar</button>
+                <span id="e2_badge"></span>
+              </div>
+            </div>
+            <div class="row">
+              <button class="btn primary" onclick="solveE2(event)">Solución guiada</button>
+              <button class="btn" onclick="resetE2(event)">Restaurar</button>
+            </div>
+            <div id="e2_steps" class="steps" style="display:none"></div>
+          </article>
+
+          <!-- Ej 3: Torricelli -->
+          <article class="panel exercise">
+            <h3>4.3 Torricelli – Velocidad v</h3>
+            <p class="muted">Datos sugeridos: h=2 m; D=0.02 m; C<sub>d</sub>=0.62.</p>
+            <div class="row">
+              <div><label>h (m)</label><input id="e3_h" type="number" step="any" value="2"></div>
+              <div><label>D (m)</label><input id="e3_D" type="number" step="any" value="0.02"></div>
+            </div>
+            <div class="row">
+              <div><label>C<sub>d</sub></label><input id="e3_Cd" type="number" step="any" value="0.62"></div>
+              <div class="answer">
+                <input id="e3_ans" type="number" step="any" placeholder="Tu v (m/s)">
+                <button class="btn ghost" onclick="checkE3(event)">Verificar</button>
+                <span id="e3_badge"></span>
+              </div>
+            </div>
+            <div class="row">
+              <button class="btn primary" onclick="solveE3(event)">Solución guiada</button>
+              <button class="btn" onclick="resetE3(event)">Restaurar</button>
+            </div>
+            <div id="e3_steps" class="steps" style="display:none"></div>
+          </article>
+
+          <!-- Ej 4: Bernoulli Complejo (Tubería inclinada) -->
+          <article class="panel exercise">
+            <h3>4.4 Tubería Inclinada</h3>
+            <p class="muted">Agua sube por una tubería reductora. Calcula P₂.<br>Datos: Q=0.05 m³/s, P₁=300 kPa, D₁=0.15m, D₂=0.10m, z₁=0m, z₂=5m.</p>
+            <div class="row">
+              <div><label>Q (m³/s)</label><input id="e4_Q" type="number" step="any" value="0.05"></div>
+              <div><label>P₁ (Pa)</label><input id="e4_P1" type="number" step="any" value="300000"></div>
+            </div>
+            <div class="row">
+              <div><label>D₁ (m)</label><input id="e4_D1" type="number" step="any" value="0.15"></div>
+              <div><label>D₂ (m)</label><input id="e4_D2" type="number" step="any" value="0.10"></div>
+            </div>
+            <div class="row">
+              <div><label>z₂ (m)</label><input id="e4_z2" type="number" step="any" value="5"></div>
+              <div class="answer">
+                <input id="e4_ans" type="number" step="any" placeholder="Tu P₂ (Pa)">
+                <button class="btn ghost" onclick="checkE4(event)">Verificar</button>
+                <span id="e4_badge"></span>
+              </div>
+            </div>
+            <div class="row">
+              <button class="btn primary" onclick="solveE4(event)">Solución guiada</button>
+              <button class="btn" onclick="resetE4(event)">Restaurar</button>
+            </div>
+            <div id="e4_steps" class="steps" style="display:none"></div>
+          </article>
+
+          <!-- Ej 5: Torricelli Tanque Presurizado -->
+          <article class="panel exercise">
+            <h3>4.5 Tanque Presurizado</h3>
+            <p class="muted">Tanque cerrado con presión de aire arriba. Calcula v.<br>Datos: h=3m, P_aire=50 kPa (man), ρ=1000 kg/m³.</p>
+            <div class="row">
+              <div><label>h (m)</label><input id="e5_h" type="number" step="any" value="3"></div>
+              <div><label>P_aire (Pa)</label><input id="e5_Pext" type="number" step="any" value="50000"></div>
+            </div>
+            <div class="row">
+              <div><label>ρ (kg/m³)</label><input id="e5_rho" type="number" step="any" value="1000"></div>
+              <div class="answer">
+                <input id="e5_ans" type="number" step="any" placeholder="Tu v (m/s)">
+                <button class="btn ghost" onclick="checkE5(event)">Verificar</button>
+                <span id="e5_badge"></span>
+              </div>
+            </div>
+            <div class="row">
+              <button class="btn primary" onclick="solveE5(event)">Solución guiada</button>
+              <button class="btn" onclick="resetE5(event)">Restaurar</button>
+            </div>
+            <div id="e5_steps" class="steps" style="display:none"></div>
+          </article>
+
+          <!-- Ej 6: Tubo de Pitot -->
+          <article class="panel exercise">
+            <h3>4.6 Tubo de Pitot</h3>
+            <p class="muted">Mide la velocidad de un avión usando presión de estancamiento.<br>Datos: P_est=90 kPa, P_stat=85 kPa, ρ_aire=1.2 kg/m³.</p>
+            <div class="row">
+              <div><label>P_est (Pa)</label><input id="e6_Pstag" type="number" step="any" value="90000"></div>
+              <div><label>P_stat (Pa)</label><input id="e6_Pstat" type="number" step="any" value="85000"></div>
+            </div>
+            <div class="row">
+              <div><label>ρ (kg/m³)</label><input id="e6_rho" type="number" step="any" value="1.2"></div>
+              <div class="answer">
+                <input id="e6_ans" type="number" step="any" placeholder="Tu v (m/s)">
+                <button class="btn ghost" onclick="checkE6(event)">Verificar</button>
+                <span id="e6_badge"></span>
+              </div>
+            </div>
+            <div class="row">
+              <button class="btn primary" onclick="solveE6(event)">Solución guiada</button>
+              <button class="btn" onclick="resetE6(event)">Restaurar</button>
+            </div>
+            <div id="e6_steps" class="steps" style="display:none"></div>
+          </article>
+
+        </div>
+      </section>
+
+      <section>
+        <div class="panel">
+          <h3>Créditos y notas</h3>
+          <p>Desarrollado para fines educativos. Si deseas extender la app con pérdidas por fricción, mediciones reales o exportación de resultados, puedes ampliar el código JavaScript al final del archivo.</p>
+          <p style="margin-top:8px"><b>Referencia principal:</b> Mott, R. L. (2006). <i>Applied Fluid Mechanics</i> (6th ed.). Pearson Prentice Hall.</p>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    // ===== STANDALONE JS (No Firebase dependency) =====
+    
+    // UI elements
+    const loginBtn = document.getElementById('btn-login');
+    const registerBtn = document.getElementById('btn-register');
+    const appContainer = document.getElementById('app');
+    const loginScreen = document.getElementById('login-screen');
+    const userPill = document.getElementById('user-pill');
+    let currentUser = null;
+
+    // Utilidades matemáticas
+    var g = 9.81;
+    var fmt = (x, d=4) => Number(x).toFixed(d);
+    var A = d => Math.PI * (d*d) / 4.0;
+
+    function show(el, flag=true){ el.style.display = flag ? '' : 'none'; }
+
+    function messageHTML(type, html){
+      return `<div class="${type==='error'?'result danger':'result ok'}">${html}</div>`;
+    }
+
+    // AUTH SYSTEM (LOCAL STORAGE)
+    const STORAGE_KEY = 'hydrogenius_users';
+
+    function getUsers() {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      return stored ? JSON.parse(stored) : [];
+    }
+
+    function saveUser(user) {
+      const users = getUsers();
+      users.push(user);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
+    }
+
+    function findUser(email) {
+      const users = getUsers();
+      return users.find(u => u.email === email);
+    }
+
+    // Hasheo simple (Simulado para frontend)
+    async function hashPassword(password) {
+      const encoder = new TextEncoder();
+      const data = encoder.encode(password);
+      const hash = await crypto.subtle.digest('SHA-256', data);
+      return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    function openRegister(){
+      document.getElementById('form-login').style.display='none';
+      document.getElementById('form-register').style.display='grid';
+    }
+    function closeRegister(){
+      document.getElementById('form-register').style.display='none';
+      document.getElementById('form-login').style.display='grid';
+    }
+
+    // REGISTER
+    async function registerUser(){
+      const name = document.getElementById('reg-name').value.trim();
+      const email = document.getElementById('reg-email').value.trim();
+      const password = document.getElementById('reg-pwd').value;
+
+      if(!name || !email || !password){ alert('Completa todos los campos.'); return; }
+      if(password.length < 6){ alert('La contraseña debe tener al menos 6 caracteres.'); return; }
+
+      const existing = findUser(email);
+      if(existing) {
+        alert('Este correo ya está registrado en este navegador.');
+        return;
+      }
+
+      const passwordHash = await hashPassword(password);
+      const newUser = { name, email, passwordHash, createdAt: new Date().toISOString() };
+      
+      saveUser(newUser);
+      alert('Cuenta creada localmente. Ahora puedes iniciar sesión.');
+      closeRegister();
+      document.getElementById('email').value = email;
+    }
+
+    // LOGIN
+    document.getElementById('form-login').addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('pwd').value;
+
+      if(!email || !password){ alert('Completa todos los campos.'); return; }
+
+      const user = findUser(email);
+      const passwordHash = await hashPassword(password);
+
+      if(user && user.passwordHash === passwordHash) {
+        currentUser = user;
+        enterApp(user.name);
+      } else {
+        alert('Credenciales incorrectas o usuario no encontrado en este navegador.');
+      }
+    });
+
+    // APP LOGIC
+    let sessionStartTime;
+    let timerInterval;
+
+    function startTimer() {
+        sessionStartTime = Date.now();
+        updateTimerDisplay();
+        timerInterval = setInterval(updateTimerDisplay, 1000);
+    }
+
+    function stopTimer() {
+        clearInterval(timerInterval);
+        document.getElementById('session-timer').textContent = "⏱️ 00:00";
+    }
+
+    function updateTimerDisplay() {
+        const now = Date.now();
+        const diff = Math.floor((now - sessionStartTime) / 1000);
+        const h = Math.floor(diff / 3600);
+        const m = Math.floor((diff % 3600) / 60);
+        const s = diff % 60;
+        const hDisplay = h > 0 ? `${h}:` : '';
+        const mDisplay = m.toString().padStart(2, '0');
+        const sDisplay = s.toString().padStart(2, '0');
+        document.getElementById('session-timer').textContent = `⏱️ ${hDisplay}${mDisplay}:${sDisplay}`;
+    }
+
+    function enterApp(name){
+      userPill.textContent = `👋🏼 ${name || 'Estudiante'}`;
+      loginScreen.style.display='none';
+      appContainer.style.display='block';
+      appContainer.style.setProperty('display', 'block', 'important');
+      location.hash = '#teoria';
+      startTimer();
+    }
+
+    function logout(){
+      currentUser = null;
+      appContainer.style.setProperty('display', 'none', 'important');
+      loginScreen.style.display='flex';
+      document.getElementById('form-login').reset();
+      stopTimer();
+    }
+
+    // === CALCULATORS & EXERCISES logic remains same ===
+    
+    // Calculadoras
+    window.calcH = function(ev){
+      ev.preventDefault();
+      const P = parseFloat(document.getElementById('h_P').value);
+      const rho = parseFloat(document.getElementById('h_rho').value);
+      const v = parseFloat(document.getElementById('h_v').value);
+      const z = parseFloat(document.getElementById('h_z').value);
+      if([P,rho,v,z].some(isNaN) || rho<=0){ document.getElementById('h_result').innerHTML = messageHTML('error', 'Revisa tus entradas.'); return; }
+      const Hp = P/(rho*g); const Hc = (v*v)/(2*g); const H = Hp + Hc + z;
+      const steps = `Fórmula: H = P/(ρg) + v²/(2g) + z\nSustitución: H = ${fmt(P)}/(${fmt(rho)}·${fmt(g,2)}) + ${fmt(v)}²/(2·${fmt(g,2)}) + ${fmt(z)}\nResultado: H = ${fmt(H)} m`;
+      document.getElementById('h_result').innerHTML = messageHTML('ok', `<b>H = ${fmt(H)} m</b><br><div class="steps">${steps}</div>`);
+    }
+
+    window.calcVenturi = function(ev){
+      ev.preventDefault();
+      const P1 = parseFloat(document.getElementById('v_P1').value), P2 = parseFloat(document.getElementById('v_P2').value);
+      const D1 = parseFloat(document.getElementById('v_D1').value), D2 = parseFloat(document.getElementById('v_D2').value);
+      const rho = parseFloat(document.getElementById('v_rho').value);
+      if([P1,P2,D1,D2,rho].some(x=>isNaN(x)||x<=0)){ document.getElementById('v_result').innerHTML = messageHTML('error', 'Revisa tus entradas.'); return; }
+      const A1 = A(D1), A2 = A(D2); const m = (A2/A1)**2; const dP = P1 - P2;
+      if(dP<=0 || (1-m)<=0){ document.getElementById('v_result').innerHTML = messageHTML('error', 'Datos inválidos (P1 debe ser > P2).'); return; }
+      const v2 = Math.sqrt((2*dP)/(rho*(1-m))); const v1 = (A2/A1)*v2; const Q = A2*v2;
+      const steps = `v₂ = √[ 2ΔP / (ρ(1−m)) ]\nDatos: ΔP=${fmt(dP)}, m=${fmt(m,6)}\nRes: v₂=${fmt(v2)} m/s, Q=${fmt(Q,5)} m³/s`;
+      document.getElementById('v_result').innerHTML = messageHTML('ok', `<b>Q = ${fmt(Q,5)} m³/s</b><br><div class="steps">${steps}</div>`);
+    }
+
+    window.calcTorricelli = function(ev){
+      ev.preventDefault();
+      const h = parseFloat(document.getElementById('t_h').value), Cd = parseFloat(document.getElementById('t_Cd').value), D = parseFloat(document.getElementById('t_D').value);
+      if([h,Cd,D].some(x=>isNaN(x)||x<=0)){ document.getElementById('t_result').innerHTML = messageHTML('error', 'Datos inválidos.'); return; }
+      const v = Cd * Math.sqrt(2*g*h); const q = A(D) * v;
+      const steps = `v = Cd√(2gh) = ${fmt(Cd)}√(2·${fmt(g,2)}·${fmt(h)}) = ${fmt(v)} m/s`;
+      document.getElementById('t_result').innerHTML = messageHTML('ok', `<b>v = ${fmt(v)} m/s</b> | Q = ${fmt(q,5)} m³/s<br><div class="steps">${steps}</div>`);
+    }
+
+    // Feedback Logic
+    function getFeedback(target, input) {
+        if(isNaN(input)) return { html: '<span class="badge fail">Ingresa un valor</span>', status: 'none' };
+        const den = Math.abs(target) < 1e-9 ? 1 : Math.abs(target);
+        const error = (Math.abs(input - target) / den) * 100;
+        let c='fail', l='<div class="traffic-ui"><div class="light r on"></div><div class="light y"></div><div class="light g"></div></div>', m=`Incorrecto (${fmt(error,1)}%)`;
+        if(error<=5){ c='ok'; l='<div class="traffic-ui"><div class="light r"></div><div class="light y"></div><div class="light g on"></div></div>'; m=`¡Excelente! (${fmt(error,1)}%)`; }
+        else if(error<=10){ c='warn'; l='<div class="traffic-ui"><div class="light r"></div><div class="light y on"></div><div class="light g"></div></div>'; m=`Cerca... (${fmt(error,1)}%)`; }
+        return { html: `<span class="badge ${c}">${l} ${m}</span>` };
+    }
+
+    // Ejercicios Logic
+    // E1
+    window.solveE1 = (e)=>{e.preventDefault(); const res = parseFloat(document.getElementById('e1_P').value)/(parseFloat(document.getElementById('e1_rho').value)*g) + (parseFloat(document.getElementById('e1_v').value)**2)/(2*g) + parseFloat(document.getElementById('e1_z').value); document.getElementById('e1_steps').textContent=`H = ${fmt(res)} m`; show(document.getElementById('e1_steps'));}
+    window.checkE1 = (e)=>{e.preventDefault(); const t = parseFloat(document.getElementById('e1_P').value)/(parseFloat(document.getElementById('e1_rho').value)*g) + (parseFloat(document.getElementById('e1_v').value)**2)/(2*g) + parseFloat(document.getElementById('e1_z').value); document.getElementById('e1_badge').innerHTML = getFeedback(t, parseFloat(document.getElementById('e1_ans').value)).html;}
+    window.resetE1 = (e)=>{e.preventDefault(); document.getElementById('e1_ans').value=''; document.getElementById('e1_badge').innerHTML=''; show(document.getElementById('e1_steps'),false);}
+    
+    // E2
+    window.solveE2 = (e)=>{e.preventDefault(); const P1=parseFloat(document.getElementById('e2_P1').value), P2=parseFloat(document.getElementById('e2_P2').value), A1=A(parseFloat(document.getElementById('e2_D1').value)), A2=A(parseFloat(document.getElementById('e2_D2').value)), rho=parseFloat(document.getElementById('e2_rho').value); const m=(A2/A1)**2; const v2=Math.sqrt((2*(P1-P2))/(rho*(1-m))); const Q=A2*v2; document.getElementById('e2_steps').textContent=`Q = ${fmt(Q,5)} m³/s`; show(document.getElementById('e2_steps'));}
+    window.checkE2 = (e)=>{e.preventDefault(); /*recalc logic duplicated for brevity*/ const P1=parseFloat(document.getElementById('e2_P1').value), P2=parseFloat(document.getElementById('e2_P2').value), A1=A(parseFloat(document.getElementById('e2_D1').value)), A2=A(parseFloat(document.getElementById('e2_D2').value)), rho=parseFloat(document.getElementById('e2_rho').value); const m=(A2/A1)**2; const v2=Math.sqrt((2*(P1-P2))/(rho*(1-m))); const Q=A2*v2; document.getElementById('e2_badge').innerHTML = getFeedback(Q, parseFloat(document.getElementById('e2_ans').value)).html;}
+    window.resetE2 = (e)=>{e.preventDefault(); document.getElementById('e2_ans').value=''; document.getElementById('e2_badge').innerHTML=''; show(document.getElementById('e2_steps'),false);}
+
+    // E3
+    window.solveE3 = (e)=>{e.preventDefault(); const v = parseFloat(document.getElementById('e3_Cd').value) * Math.sqrt(2*g*parseFloat(document.getElementById('e3_h').value)); document.getElementById('e3_steps').textContent=`v = ${fmt(v)} m/s`; show(document.getElementById('e3_steps'));}
+    window.checkE3 = (e)=>{e.preventDefault(); const v = parseFloat(document.getElementById('e3_Cd').value) * Math.sqrt(2*g*parseFloat(document.getElementById('e3_h').value)); document.getElementById('e3_badge').innerHTML = getFeedback(v, parseFloat(document.getElementById('e3_ans').value)).html;}
+    window.resetE3 = (e)=>{e.preventDefault(); document.getElementById('e3_ans').value=''; document.getElementById('e3_badge').innerHTML=''; show(document.getElementById('e3_steps'),false);}
+
+    // E4
+    window.solveE4 = (e)=>{e.preventDefault(); const Q=parseFloat(document.getElementById('e4_Q').value), P1=parseFloat(document.getElementById('e4_P1').value), A1=A(parseFloat(document.getElementById('e4_D1').value)), A2=A(parseFloat(document.getElementById('e4_D2').value)), z2=parseFloat(document.getElementById('e4_z2').value); const v1=Q/A1, v2=Q/A2; const P2 = P1 + 0.5*1000*(v1*v1 - v2*v2) - 1000*g*z2; document.getElementById('e4_steps').textContent=`P2 = ${fmt(P2,2)} Pa`; show(document.getElementById('e4_steps'));}
+    window.checkE4 = (e)=>{e.preventDefault(); const Q=parseFloat(document.getElementById('e4_Q').value), P1=parseFloat(document.getElementById('e4_P1').value), A1=A(parseFloat(document.getElementById('e4_D1').value)), A2=A(parseFloat(document.getElementById('e4_D2').value)), z2=parseFloat(document.getElementById('e4_z2').value); const v1=Q/A1, v2=Q/A2; const P2 = P1 + 0.5*1000*(v1*v1 - v2*v2) - 1000*g*z2; document.getElementById('e4_badge').innerHTML = getFeedback(P2, parseFloat(document.getElementById('e4_ans').value)).html;}
+    window.resetE4 = (e)=>{e.preventDefault(); document.getElementById('e4_ans').value=''; document.getElementById('e4_badge').innerHTML=''; show(document.getElementById('e4_steps'),false);}
+
+    // E5
+    window.solveE5 = (e)=>{e.preventDefault(); const val = Math.sqrt(2*g*parseFloat(document.getElementById('e5_h').value) + (2*parseFloat(document.getElementById('e5_Pext').value))/parseFloat(document.getElementById('e5_rho').value)); document.getElementById('e5_steps').textContent=`v = ${fmt(val)} m/s`; show(document.getElementById('e5_steps'));}
+    window.checkE5 = (e)=>{e.preventDefault(); const val = Math.sqrt(2*g*parseFloat(document.getElementById('e5_h').value) + (2*parseFloat(document.getElementById('e5_Pext').value))/parseFloat(document.getElementById('e5_rho').value)); document.getElementById('e5_badge').innerHTML = getFeedback(val, parseFloat(document.getElementById('e5_ans').value)).html;}
+    window.resetE5 = (e)=>{e.preventDefault(); document.getElementById('e5_ans').value=''; document.getElementById('e5_badge').innerHTML=''; show(document.getElementById('e5_steps'),false);}
+
+    // E6
+    window.solveE6 = (e)=>{e.preventDefault(); const val = Math.sqrt((2*(parseFloat(document.getElementById('e6_Pstag').value)-parseFloat(document.getElementById('e6_Pstat').value)))/parseFloat(document.getElementById('e6_rho').value)); document.getElementById('e6_steps').textContent=`v = ${fmt(val)} m/s`; show(document.getElementById('e6_steps'));}
+    window.checkE6 = (e)=>{e.preventDefault(); const val = Math.sqrt((2*(parseFloat(document.getElementById('e6_Pstag').value)-parseFloat(document.getElementById('e6_Pstat').value)))/parseFloat(document.getElementById('e6_rho').value)); document.getElementById('e6_badge').innerHTML = getFeedback(val, parseFloat(document.getElementById('e6_ans').value)).html;}
+    window.resetE6 = (e)=>{e.preventDefault(); document.getElementById('e6_ans').value=''; document.getElementById('e6_badge').innerHTML=''; show(document.getElementById('e6_steps'),false);}
+
+    // Initialize MathJax
+    window.addEventListener('load', function() {
+      if (window.MathJax) { MathJax.typesetPromise().catch((err) => console.log('MathJax error:', err)); }
+    });
+
+  </script>
+</body>
+</html>
